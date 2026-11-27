@@ -5,22 +5,7 @@ from configuracao import (
     COR_FUNDO, COR_SECUNDARIA_FUNDO, BRANCO, CINZA_BOTAO, CINZA_HOVER, COR_RELEVO,
     DOURADO, VERMELHO, VERDE, AMARELO, LINHA_COR
 )
-
-TEXTO_COMO_JOGAR = '''
-Para o multiplayer:
-Um computador deve ser escolhido pra deixar o servidor do jogo rodando.
-Cada jogador deve estar na mesma rede desse computador,
-e colocar o IP dele na tela inicial do jogo (ex: 10.3.1.17)
-4 jogadores devem estar numa partida para o jogo começar.
-Terão 2 duplas de jogadores, onde em cada uma:
-- Um jogador vai controlar o movimento dos blocos
-- Um jogador vai controlar o giro dos blocos
-
-No jogo:
-Pressione as setas Direita e Esquerda pra mover os blocos para os lados
-Pressione a seta para Cima para girar os blocos
-Pressione a seta para Baixo para fazer o bloco cair mais rápido
-'''
+from tela_como_jogar import TelaComoJogar
 
 class TelaInicial:
     def __init__(self, superficie, ao_iniciar, rede):
@@ -65,6 +50,7 @@ class TelaInicial:
         ]
         caminho_logo = next((p for p in caminhos_logo if path.exists(p)), None)
         self.logo = None
+        img_logo = None
         if caminho_logo:
             try:
                 img_logo = pygame.image.load(caminho_logo)
@@ -75,7 +61,6 @@ class TelaInicial:
                 print(f"Erro ao carregar imagem da logo: {e}")
 
         self.mostrar_como_jogar = False
-        self.linhas_texto = [linha for linha in TEXTO_COMO_JOGAR.strip().split("\n")]
 
         largura_tela = self.superficie.get_width()
         altura_tela = self.superficie.get_height()
@@ -101,7 +86,7 @@ class TelaInicial:
         self.subtitulos = {
             '1v1': "WASD vs Setas no mesmo computador",
             '2v2': "4 computadores se conectam a 1 servidor",
-            'como_jogar': "Controles e Instruções pro 2 versus 2"
+            'como_jogar': "Regras, modos e controles do jogo"
         }
 
         # Campo de IP do Servidor (abaixo do botão 2 VERSUS 2 e seu subtítulo)
@@ -112,16 +97,8 @@ class TelaInicial:
         self.y_label_ip = y_botoes + altura_botao + 46
         self.rect_input = pygame.Rect(centro_x - (largura_input // 2), self.y_label_ip + 22, largura_input, altura_input)
 
-        # Elementos da tela COMO JOGAR
-        largura_card = 820
-        altura_card = 640
-        self.rect_card_como_jogar = pygame.Rect(
-            (largura_tela - largura_card) // 2,
-            (altura_tela - altura_card) // 2,
-            largura_card,
-            altura_card
-        )
-        self.rect_botao_voltar = pygame.Rect(centro_x - 110, self.rect_card_como_jogar.bottom - 75, 220, 48)
+        # Tela COMO JOGAR (tutorial em páginas, com a logo no topo)
+        self.tela_como_jogar = TelaComoJogar(self.superficie, self.desenhar_botao_3d, img_logo)
 
     def conectar(self):
         sucesso = self.rede.conectar(self.ip_servidor)
@@ -132,12 +109,8 @@ class TelaInicial:
 
     def tratar_evento(self, evento):
         if self.mostrar_como_jogar:
-            if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
-                if self.rect_botao_voltar.collidepoint(evento.pos) or not self.rect_card_como_jogar.collidepoint(evento.pos):
-                    self.mostrar_como_jogar = False
-            elif evento.type == pygame.KEYDOWN:
-                if evento.key == pygame.K_ESCAPE:
-                    self.mostrar_como_jogar = False
+            if self.tela_como_jogar.tratar_evento(evento):
+                self.mostrar_como_jogar = False
             return
 
         if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
@@ -159,6 +132,7 @@ class TelaInicial:
                         pass
                     self.ao_iniciar()
             elif self.rect_botao_como_jogar.collidepoint(evento.pos):
+                self.tela_como_jogar.abrir()
                 self.mostrar_como_jogar = True
 
         elif evento.type == pygame.KEYDOWN and self.input_ativo:
@@ -228,39 +202,7 @@ class TelaInicial:
         centro_x = largura_tela // 2
 
         if self.mostrar_como_jogar:
-            # Relevo do card
-            relevo_card = pygame.Rect(
-                self.rect_card_como_jogar.x,
-                self.rect_card_como_jogar.y + 6,
-                self.rect_card_como_jogar.width,
-                self.rect_card_como_jogar.height
-            )
-            pygame.draw.rect(self.superficie, COR_RELEVO, relevo_card, border_radius=8)
-            pygame.draw.rect(self.superficie, CINZA_BOTAO, self.rect_card_como_jogar, border_radius=8)
-            pygame.draw.rect(self.superficie, BRANCO, self.rect_card_como_jogar, width=2, border_radius=8)
-
-            # Título
-            titulo = self.fonte_titulo.render("COMO JOGAR", True, BRANCO)
-            self.superficie.blit(titulo, titulo.get_rect(center=(self.rect_card_como_jogar.centerx, self.rect_card_como_jogar.y + 45)))
-
-            # Linhas de texto
-            y_texto = self.rect_card_como_jogar.y + 95
-            for linha in self.linhas_texto:
-                cor = DOURADO if (linha.startswith("Para") or linha.startswith("No jogo")) else LINHA_COR
-                texto_renderizado = self.fonte_instrucoes.render(linha, True, cor)
-                self.superficie.blit(texto_renderizado, (self.rect_card_como_jogar.x + 50, y_texto))
-                y_texto += 26
-
-            # Botão Voltar
-            hover_voltar = self.desenhar_botao_3d(self.rect_botao_voltar, "VOLTAR")
-
-            try:
-                if hover_voltar:
-                    pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
-                else:
-                    pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
-            except Exception:
-                pass
+            self.tela_como_jogar.desenhar()
             return
 
         # --- Tela Inicial Padrão ---
