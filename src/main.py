@@ -1,37 +1,34 @@
-from configuracao import *
+from config.configuracoes import *
+from config.audios import *
 from random import choice
 from os import path
 
 # componentes
-from jogo import Jogo
-from pontuacao import Pontuacao
-from previa import Previa
-from tela_inicial import TelaInicial
-from rede import ClienteRede
 from tela_fim_de_jogo import TelaFimDeJogo
 from feedback_texto import FeedbackTexto
+from tela_inicial import TelaInicial
+from pontuacao import Pontuacao
+from rede import ClienteRede
+from previa import Previa
+from jogo import Jogo
+
 # Deixa o ícone ser exibido corretamente na barra de tarefas do Windows
 import ctypes
 import sys
+
+sys.stdout.reconfigure(encoding='utf-8')
 
 if sys.platform == "win32":
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
         "MeuJogo.Tetris.2vs2"
     )
 
-OFFSET_EQ1 = 0
-OFFSET_EQ2 = LARGURA_TABULEIRO_COMPLETO + ESPACAMENTO
-NOMES_FUNCAO = {'MOVIMENTO': 'MOVIMENTO', 'ROTACAO': 'ROTAÇÃO'}
-
-CENTRO_JOGO_EQ1 = (ESPACAMENTO + OFFSET_EQ1 + LARGURA_JOGO // 2, ESPACAMENTO + ALTURA_JOGO // 2)
-CENTRO_JOGO_EQ2 = (ESPACAMENTO + OFFSET_EQ2 + LARGURA_JOGO // 2, ESPACAMENTO + ALTURA_JOGO // 2)
-
 class Main:
     def __init__(self):
         pygame.init()
 
         # Carrega o ícone
-        icone = pygame.image.load("img/icon.png")
+        icone = pygame.image.load(PATH_ICON_GAME)
 
         # Define o ícone da janela
         pygame.display.set_icon(icone)
@@ -40,16 +37,16 @@ class Main:
 
         # musica de fundo
         pygame.mixer.init()
-        caminho_musica = path.join('audio', 'Tetris_theme.mp3')
+        caminho_musica = path.join(PATH_MUSICAS, MUSICA_TEMA)
         pygame.mixer.music.load(caminho_musica)
-        pygame.mixer.music.set_volume(0.3)
+        pygame.mixer.music.set_volume(VOLUME)
         pygame.mixer.music.play(-1)
 
         # Criando a superfície do jogo
-        self.exibir_superficie = pygame.display.set_mode((LARGURA_JANELA, ALTURA_JANELA))
+        self.exibir_superficie = pygame.display.set_mode((LARGURA_JANELA, ALTURA_JANELA), pygame.RESIZABLE)
         self.relogio = pygame.time.Clock()
         pygame.display.set_caption('Tetris - 2vs2 Co-op Multiplayer')
-        self.fonte_status = pygame.font.Font(None, 26)
+        self.fonte_status = pygame.font.SysFont(["segoeuisymbol", "dejavusans", "arial", ""], TAMANHO_FONTE_INFORMACOES, bold=True)
 
         # Conexão de Rede
         self.rede = ClienteRede()
@@ -78,8 +75,8 @@ class Main:
             self.proximas_pecas1 = list(pecas_eq1)
             self.proximas_pecas2 = list(pecas_eq2)
         else:
-            self.proximas_pecas1 = [choice(list(TETROMINOS.keys())) for _ in range(5)]
-            self.proximas_pecas2 = [choice(list(TETROMINOS.keys())) for _ in range(5)]
+            self.proximas_pecas1 = [choice(list(TETROMINOS.keys())) for _ in range(TOTAL_PECAS_SORTEADAS)]
+            self.proximas_pecas2 = [choice(list(TETROMINOS.keys())) for _ in range(TOTAL_PECAS_SORTEADAS)]
 
         self.feedback.limpar()
 
@@ -94,6 +91,9 @@ class Main:
         self.previa2 = Previa(offset_x=OFFSET_EQ2)
 
         self.estado = 'jogando'
+
+        # Tempo de espera ate começar o jogo.
+        self.inicio_partida_ms = pygame.time.get_ticks() + TEMPO_ESPERA_INICIO_JOGO
 
     def enviar_linha_ataque(self, equipe_atacante, quantidade=1):
         equipe_alvo = 'EQUIPE_2' if equipe_atacante == 'EQUIPE_1' else 'EQUIPE_1'
@@ -112,6 +112,7 @@ class Main:
                 jogo_alvo.adicionar_linha_ataque(2)
 
     def atualiza_pontos_1(self, linhas, pontos, level):
+        ''' Atualiza a pontuação atual da equipe 1 '''
         if self.pontuacao1:
             novas_linhas = linhas - self.pontuacao1.linhas
             if novas_linhas > 0:
@@ -123,6 +124,7 @@ class Main:
             self.pontuacao1.level = level
 
     def atualiza_pontos_2(self, linhas, pontos, level):
+        ''' Atualiza a pontuação atual da equipe 2 '''
         if self.pontuacao2:
             novas_linhas = linhas - self.pontuacao2.linhas
             if novas_linhas > 0:
@@ -132,8 +134,6 @@ class Main:
             self.pontuacao2.linhas = linhas
             self.pontuacao2.pontos = pontos
             self.pontuacao2.level = level
-
-
 
     def _sacar_peca(self, lista):
         peca = lista.pop(0) if lista else choice(list(TETROMINOS.keys()))
@@ -212,7 +212,7 @@ class Main:
             funcao = NOMES_FUNCAO.get(papel.split('_')[-1], papel)
             texto_funcao = f"SUA FUNÇÃO: {funcao} DA EQUIPE {numero_minha_equipe}"
         else:
-            texto_funcao = "MODO LOCAL  |  Equipe 1: WASD  -  Equipe 2: Setas"
+            texto_funcao = TEXTO_FUNCAO_EQUIPES_OFFLINE
         surf_status = self.fonte_status.render(texto_funcao, True, (255, 255, 0))
         self.exibir_superficie.blit(
             surf_status, surf_status.get_rect(center=(LARGURA_JANELA // 2, ALTURA_JANELA - ESPACAMENTO // 2)))
@@ -223,6 +223,9 @@ class Main:
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     exit()
+
+                elif event.type == pygame.VIDEORESIZE:
+                    largura, altura = event.w, event.h
 
                 if self.estado == 'menu':
                     self.tela_inicial.tratar_evento(event)
@@ -253,25 +256,41 @@ class Main:
                 
             if self.estado == 'menu':
                 self.tela_inicial.desenhar()
+
             elif self.estado == 'jogando':
                 self.desenhar_cabecalhos()
 
-                # Desenha Equipe 1 (Esquerda)
-                self.jogo1.executar()
-                self.pontuacao1.executar()
-                self.previa1.executar(self.proximas_pecas1)
+                agora = pygame.time.get_ticks()
 
-                # Desenha Equipe 2 (Direita)
-                self.jogo2.executar()
-                self.pontuacao2.executar()
-                self.previa2.executar(self.proximas_pecas2) 
-                # Desenha os feedbacks flutuantes por cima de ambos os tabuleiros
-                self.feedback.executar(self.exibir_superficie)
+                if agora < self.inicio_partida_ms:
+                    self.exibir_contangem_inicio(agora);
+                
+                else:
+                    # Desenha Equipe 1 (Esquerda)
+                    self.jogo1.executar()
+                    self.pontuacao1.executar()
+                    self.previa1.executar(self.proximas_pecas1)
+
+                    # Desenha Equipe 2 (Direita)
+                    self.jogo2.executar()
+                    self.pontuacao2.executar()
+                    self.previa2.executar(self.proximas_pecas2) 
+                    # Desenha os feedbacks flutuantes por cima de ambos os tabuleiros
+                    self.feedback.executar(self.exibir_superficie)
+
             elif self.estado == 'fim_de_jogo':
                 self.tela_fim.desenhar()
 
             pygame.display.update()
             self.relogio.tick(60)
+
+    def exibir_contangem_inicio(self, agora):
+        segudos_restantes = ((self.inicio_partida_ms - agora) // 1000) + 1
+        fonte_contagem = pygame.font.Font(None, TAMANHO_FONTE_CONTAGEM)
+        superficie_contagem = fonte_contagem.render(str(segudos_restantes), True, AMARELO)
+        retangulo_contagem = superficie_contagem.get_rect(center=(LARGURA_JANELA // 2, ALTURA_JANELA // 2))
+        
+        self.exibir_superficie.blit(superficie_contagem, retangulo_contagem)
 
     def pedir_revanche(self):
         if self._revanche_pedida:

@@ -1,12 +1,12 @@
-from configuracao import *
+from config.audios import PATH_MUSICAS, SOM_LINHA_COMPLETADA
 from temporizador import Temporizador
+from random import randint
+from config.configuracoes import *
 from os import path
-from random import choice, randint
-
 
 class Jogo:
     def __init__(self, get_proxima_peca, atualiza_pontos, rede=None, offset_x=0, equipe='EQUIPE_1'):
-        self.som_linha = pygame.mixer.Sound(path.join('audio', 'Tetris_clear_line.mp3'))
+        self.som_linha = pygame.mixer.Sound(path.join(PATH_MUSICAS, SOM_LINHA_COMPLETADA))
         self.som_linha.set_volume(0.5)
 
         self.offset_x = offset_x
@@ -29,12 +29,12 @@ class Jogo:
         self.superficie_linha.set_colorkey((0, 255, 0))
         self.superficie_linha.set_alpha(120)
 
-        self.fonte_fim = pygame.font.Font(None, 48)
+        self.fonte_fim = pygame.font.Font(None, TAMANHO_FONTE_FIM_JOGO)
 
         self.dados_campo = [[0 for x in range(COLUNAS)] for y in range(LINHAS)]
 
         self.velocidade_descida = VELOCIDADE_ATUALIZACAO_INICIAL
-        self.descer_peca_rapida = self.velocidade_descida * 0.3
+        self.descer_peca_rapida = self.velocidade_descida * VELOCIDADE_DESCIDA_PECA
         self.pressionada_tecla_descer = False
 
         self.level_atual = 1

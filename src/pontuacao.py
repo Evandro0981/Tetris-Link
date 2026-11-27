@@ -1,4 +1,4 @@
-from configuracao import *
+from config.configuracoes import *
 from os import path
 
 class Pontuacao:

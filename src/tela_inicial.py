@@ -1,11 +1,8 @@
+from tela_como_jogar import TelaComoJogar
+from config.configuracoes import *
+from os import path
 import pygame
 import math
-from os import path
-from configuracao import (
-    COR_FUNDO, COR_SECUNDARIA_FUNDO, BRANCO, CINZA_BOTAO, CINZA_HOVER, COR_RELEVO,
-    DOURADO, VERMELHO, VERDE, AMARELO, LINHA_COR
-)
-from tela_como_jogar import TelaComoJogar
 
 class TelaInicial:
     def __init__(self, superficie, ao_iniciar, rede):

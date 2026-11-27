@@ -1,4 +1,4 @@
-from configuracao import *
+from config.configuracoes import *
 from pygame.image import load
 from os import path
 

@@ -4,10 +4,10 @@
     Exibe textos no centro do tabuleiro de cada equipe que sobem suavemente e desaparecem.
 '''
 
-import pygame
+from config.configuracoes import *
+from config.cores import *
 from os import path
-from configuracao import *
-
+import pygame
 
 def carregar_fonte(tamanho):
     '''Carrega a fonte do jogo, sem dar erros se for executado numa pasta diferente'''
@@ -16,6 +16,7 @@ def carregar_fonte(tamanho):
         path.join('src', 'graficos', 'Russo_One.ttf'),
         path.join(path.dirname(__file__), 'graficos', 'Russo_One.ttf')
     ]
+    
     for caminho in caminhos_possiveis:
         if path.exists(caminho):
             try:

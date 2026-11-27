@@ -6,17 +6,10 @@
     páginas (quebrando as seções que não cabem) e de desenhá-las.
 '''
 
-import pygame
+from config.tutorial import SECOES_TUTORIAL
+from config.cores import *
 from os import path
-from configuracao import (
-    BRANCO, CINZA_BOTAO, CINZA_HOVER, COR_RELEVO, COR_SECUNDARIA_FUNDO,
-    DOURADO, LINHA_COR, CIANO
-)
-from conteudo_tutorial import SECOES_TUTORIAL
-
-COR_GRADE = '#3A375E'
-COR_LINHA_ALTERNADA = '#1F1D35'
-
+import pygame
 
 def _achar_arquivo(*partes):
     '''Procura um arquivo do jogo, mesmo que o programa seja aberto de outra pasta.'''

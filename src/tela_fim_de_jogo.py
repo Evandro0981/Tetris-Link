@@ -1,6 +1,5 @@
+from config.cores import *
 import pygame
-from configuracao import COR_FUNDO, DOURADO, BRANCO, CINZA_BOTAO, CINZA_HOVER
-
 
 class TelaFimDeJogo:
     def __init__(self, superficie, ao_revanche, ao_voltar_inicio):

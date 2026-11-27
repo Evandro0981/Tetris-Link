@@ -1,5 +1,6 @@
-import socket
+from config.configuracoes import MAX_BUFFER_MENSAGEM, CODIFICACAO
 import threading
+import socket
 import json
 
 
@@ -34,7 +35,7 @@ class ClienteRede:
     def ouvir_servidor(self):
         while self.conectado:
             try:
-                dados = self.cliente.recv(8192).decode('utf-8')
+                dados = self.cliente.recv(MAX_BUFFER_MENSAGEM).decode(CODIFICACAO)
                 if not dados:
                     self.conectado = False
                     break
@@ -73,6 +74,6 @@ class ClienteRede:
             try:
                 mensagem = json.dumps(dados) + '\n'
                 with self.trava_envio:
-                    self.cliente.sendall(mensagem.encode('utf-8'))
+                    self.cliente.sendall(mensagem.encode(CODIFICACAO))
             except Exception as e:
                 print(f"Erro ao enviar: {e}")
