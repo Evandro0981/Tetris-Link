@@ -2,10 +2,11 @@ from config.cores import *
 import pygame
 
 class TelaFimDeJogo:
-    def __init__(self, superficie, ao_revanche, ao_voltar_inicio):
+    def __init__(self, superficie, ao_revanche, ao_voltar_inicio, obter_pos_mouse=pygame.mouse.get_pos):
         self.superficie = superficie
         self.ao_revanche = ao_revanche
         self.ao_voltar_inicio = ao_voltar_inicio
+        self.obter_pos_mouse = obter_pos_mouse
 
         self.fonte_titulo = pygame.font.Font(None, 64)
         self.fonte_vencedor = pygame.font.Font(None, 44)
@@ -88,7 +89,7 @@ class TelaFimDeJogo:
             cor = (30, 30, 30)
             cor_texto = (120, 120, 120)
         else:
-            cor = CINZA_HOVER if rect.collidepoint(pygame.mouse.get_pos()) else CINZA_BOTAO
+            cor = CINZA_HOVER if rect.collidepoint(self.obter_pos_mouse()) else CINZA_BOTAO
             cor_texto = BRANCO
         pygame.draw.rect(self.superficie, cor, rect)
         pygame.draw.rect(self.superficie, BRANCO, rect, 2)

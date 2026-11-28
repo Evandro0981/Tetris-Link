@@ -3,8 +3,8 @@ from pygame.image import load
 from os import path
 
 class Previa:
-     def __init__(self, offset_x=0):
-          self.mostrar_superficie = pygame.display.get_surface()
+     def __init__(self, offset_x=0, superficie=None):
+          self.mostrar_superficie = superficie or pygame.display.get_surface()
           self.superficie = pygame.Surface((LARGURA_BARRA_LATERAL, ALTURA_JOGO * FRACAO_ALTURA_PREVIA - ESPACAMENTO))
           
           # Posiciona a caixa de prévia ao lado do tabuleiro da respectiva equipe

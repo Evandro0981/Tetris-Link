@@ -2,7 +2,7 @@ from config.configuracoes import *
 from os import path
 
 class Pontuacao:
-     def __init__(self, offset_x=0):
+     def __init__(self, offset_x=0, superficie=None):
           self.superficie = pygame.Surface((LARGURA_BARRA_LATERAL, ALTURA_JOGO * FRACAO_ALTURA_PONTUACAO - ESPACAMENTO))
           
           # Posiciona a caixa de pontuação abaixo da prévia da respectiva equipe
@@ -10,7 +10,7 @@ class Pontuacao:
           pos_y = ESPACAMENTO + (ALTURA_JOGO * FRACAO_ALTURA_PREVIA)
           self.rect = self.superficie.get_rect(topleft = (pos_x, pos_y))
           
-          self.mostrar_superficie = pygame.display.get_surface()
+          self.mostrar_superficie = superficie or pygame.display.get_surface()
           self.fonte = pygame.font.Font(path.join('graficos', 'Russo_One.ttf'), 24)
           self.incrementa_altura = self.superficie.get_height() / 3
 

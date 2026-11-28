@@ -5,7 +5,7 @@ from config.configuracoes import *
 from os import path
 
 class Jogo:
-    def __init__(self, get_proxima_peca, atualiza_pontos, rede=None, offset_x=0, equipe='EQUIPE_1'):
+    def __init__(self, get_proxima_peca, atualiza_pontos, rede=None, offset_x=0, equipe='EQUIPE_1', superficie=None):
         self.som_linha = pygame.mixer.Sound(path.join(PATH_MUSICAS, SOM_LINHA_COMPLETADA))
         self.som_linha.set_volume(0.5)
 
@@ -15,7 +15,7 @@ class Jogo:
         self.contador_pecas_fixadas = 0
 
         self.superficie = pygame.Surface((LARGURA_JOGO, ALTURA_JOGO))
-        self.mostrar_superficie = pygame.display.get_surface()
+        self.mostrar_superficie = superficie or pygame.display.get_surface()
 
         pos_x = ESPACAMENTO + self.offset_x
         self.retangulo = self.superficie.get_rect(topleft=(pos_x, ESPACAMENTO))

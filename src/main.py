@@ -43,7 +43,8 @@ class Main:
         pygame.mixer.music.play(-1)
 
         # Criando a superfície do jogo
-        self.exibir_superficie = pygame.display.set_mode((LARGURA_JANELA, ALTURA_JANELA), pygame.RESIZABLE)
+        self.janela = pygame.display.set_mode((LARGURA_JANELA, ALTURA_JANELA), pygame.RESIZABLE)
+        self.exibir_superficie = pygame.Surface((LARGURA_JANELA, ALTURA_JANELA))
         self.relogio = pygame.time.Clock()
         pygame.display.set_caption('Tetris - 2vs2 Co-op Multiplayer')
         self.fonte_status = pygame.font.SysFont(["segoeuisymbol", "dejavusans", "arial", ""], TAMANHO_FONTE_INFORMACOES, bold=True)
@@ -53,8 +54,8 @@ class Main:
 
         # Estado do jogo ('menu' ou 'jogando')
         self.estado = 'menu'
-        self.tela_inicial = TelaInicial(self.exibir_superficie, self.iniciar_jogo, self.rede)
-        self.tela_fim = TelaFimDeJogo(self.exibir_superficie, ao_revanche=self.pedir_revanche, ao_voltar_inicio=self.pedir_voltar_inicio)
+        self.tela_inicial = TelaInicial(self.exibir_superficie, self.iniciar_jogo, self.rede, self.obter_pos_mouse)
+        self.tela_fim = TelaFimDeJogo(self.exibir_superficie, ao_revanche=self.pedir_revanche, ao_voltar_inicio=self.pedir_voltar_inicio, obter_pos_mouse=self.obter_pos_mouse)
 
         self._revanche_pedida = False
 
@@ -81,14 +82,14 @@ class Main:
         self.feedback.limpar()
 
         # Instancia Equipe 1
-        self.jogo1 = Jogo(self.get_proximas_pecas_1, self.atualiza_pontos_1, self.rede, offset_x=OFFSET_EQ1, equipe='EQUIPE_1')
-        self.pontuacao1 = Pontuacao(offset_x=OFFSET_EQ1)
-        self.previa1 = Previa(offset_x=OFFSET_EQ1)
+        self.jogo1 = Jogo(self.get_proximas_pecas_1, self.atualiza_pontos_1, self.rede, offset_x=OFFSET_EQ1, equipe='EQUIPE_1', superficie=self.exibir_superficie)
+        self.pontuacao1 = Pontuacao(offset_x=OFFSET_EQ1, superficie=self.exibir_superficie)
+        self.previa1 = Previa(offset_x=OFFSET_EQ1, superficie=self.exibir_superficie)
 
         # Instancia Equipe 2
-        self.jogo2 = Jogo(self.get_proximas_pecas_2, self.atualiza_pontos_2, self.rede, offset_x=OFFSET_EQ2, equipe='EQUIPE_2')
-        self.pontuacao2 = Pontuacao(offset_x=OFFSET_EQ2)
-        self.previa2 = Previa(offset_x=OFFSET_EQ2)
+        self.jogo2 = Jogo(self.get_proximas_pecas_2, self.atualiza_pontos_2, self.rede, offset_x=OFFSET_EQ2, equipe='EQUIPE_2', superficie=self.exibir_superficie)
+        self.pontuacao2 = Pontuacao(offset_x=OFFSET_EQ2, superficie=self.exibir_superficie)
+        self.previa2 = Previa(offset_x=OFFSET_EQ2, superficie=self.exibir_superficie)
 
         self.estado = 'jogando'
 
@@ -217,6 +218,26 @@ class Main:
         self.exibir_superficie.blit(
             surf_status, surf_status.get_rect(center=(LARGURA_JANELA // 2, ALTURA_JANELA - ESPACAMENTO // 2)))
 
+    def _obter_offset_janela(self):
+        largura_janela, altura_janela = self.janela.get_size()
+        return (
+            (largura_janela - LARGURA_JANELA) // 2,
+            (altura_janela - ALTURA_JANELA) // 2,
+        )
+
+    def obter_pos_mouse(self):
+        x, y = pygame.mouse.get_pos()
+        offset_x, offset_y = self._obter_offset_janela()
+        return (x - offset_x, y - offset_y)
+
+    def _traduzir_evento_mouse(self, event):
+        if hasattr(event, 'pos'):
+            offset_x, offset_y = self._obter_offset_janela()
+            attrs = dict(event.dict)
+            attrs['pos'] = (event.pos[0] - offset_x, event.pos[1] - offset_y)
+            return pygame.event.Event(event.type, attrs)
+        return event
+
     def executar(self):
         while True:
             for event in pygame.event.get():
@@ -224,16 +245,13 @@ class Main:
                     pygame.quit()
                     exit()
 
-                elif event.type == pygame.VIDEORESIZE:
-                    largura, altura = event.w, event.h
-
                 if self.estado == 'menu':
-                    self.tela_inicial.tratar_evento(event)
+                    self.tela_inicial.tratar_evento(self._traduzir_evento_mouse(event))
                 elif self.estado == 'jogando':
                     if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                         self.estado = 'menu'
                 elif self.estado == 'fim_de_jogo':
-                    self.tela_fim.tratar_evento(event)
+                    self.tela_fim.tratar_evento(self._traduzir_evento_mouse(event))
 
             # Esvazia a fila de rede uma vez por quadro e despacha na ordem de chegada
             for msg in self.rede.coletar_mensagens():
@@ -280,6 +298,20 @@ class Main:
 
             elif self.estado == 'fim_de_jogo':
                 self.tela_fim.desenhar()
+
+            largura_janela, altura_janela = self.janela.get_size()
+            if (largura_janela, altura_janela) != (LARGURA_JANELA, ALTURA_JANELA):
+                offset_x, offset_y = self._obter_offset_janela()
+                self.janela.fill(COR_FUNDO_MAXIMIZADO)
+                self.janela.blit(self.exibir_superficie, (offset_x, offset_y))
+                pygame.draw.rect(
+                    self.janela,
+                    BRANCO,
+                    (offset_x - 2, offset_y - 2, LARGURA_JANELA + 4, ALTURA_JANELA + 4),
+                    2
+                )
+            else:
+                self.janela.blit(self.exibir_superficie, (0, 0))
 
             pygame.display.update()
             self.relogio.tick(60)

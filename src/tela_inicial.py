@@ -5,10 +5,11 @@ import pygame
 import math
 
 class TelaInicial:
-    def __init__(self, superficie, ao_iniciar, rede):
+    def __init__(self, superficie, ao_iniciar, rede, obter_pos_mouse=pygame.mouse.get_pos):
         self.superficie = superficie
         self.ao_iniciar = ao_iniciar
         self.rede = rede
+        self.obter_pos_mouse = obter_pos_mouse
         self.status_conexao = ""
 
         # Fontes do jogo
@@ -142,7 +143,7 @@ class TelaInicial:
                     self.ip_servidor += evento.unicode
 
     def desenhar_botao_3d(self, rect, texto, ativo=True):
-        pos_mouse = pygame.mouse.get_pos()
+        pos_mouse = self.obter_pos_mouse()
         hover = rect.collidepoint(pos_mouse) and ativo
         pressionado = hover and pygame.mouse.get_pressed()[0]
 
@@ -168,7 +169,7 @@ class TelaInicial:
         return hover
 
     def desenhar_input_3d(self):
-        pos_mouse = pygame.mouse.get_pos()
+        pos_mouse = self.obter_pos_mouse()
         hover = self.rect_input.collidepoint(pos_mouse)
 
         profundidade = 4
